@@ -1,2 +1,3 @@
 .acts/
 .venv/
+*.csv
