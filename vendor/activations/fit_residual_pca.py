@@ -17,13 +17,13 @@ Run from the repo root:
 
 from __future__ import annotations
 
+import argparse
 import glob
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import torch
 from sklearn.decomposition import IncrementalPCA
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +43,12 @@ LAYER_COMPONENT = "layer_out/21"
 RESIDUAL_COMPONENTS = 3
 BATCH_SIZE = 2048
 
+# Reading `.acts/` needs torch; fitting needs the same scikit-learn the other
+# artifacts were pickled with. When one interpreter has neither, run
+# `--write-residuals` where torch is available and `--read-residuals` where
+# scikit-learn matches.
+RESIDUAL_CACHE = ACTIVATION_ROOT / "_reconstruction_residuals.npy"
+
 # `base_unit` is plural in the cached metadata, and the horizon table has no
 # millennium entry.
 UNIT_MONTHS = dict(UNIT_TO_MONTHS) | {"millennium": 12000.0}
@@ -56,6 +62,10 @@ def _horizon_months(base_value: float, base_unit: str) -> float:
 
 def group_mean_activations(folder: Path) -> dict[tuple[str, float], np.ndarray]:
     """Average one folder's cached activations per (task, horizon) group."""
+    # Imported here so the fitting half of this script runs in an environment
+    # without torch, reading a cached residual matrix instead.
+    import torch
+
     sums: dict[tuple[str, float], np.ndarray] = {}
     counts: dict[tuple[str, float], int] = {}
     for path in sorted(glob.glob(str(folder / "*.pt"))):
@@ -98,12 +108,37 @@ def aggregated_activation_matrix(projection: pd.DataFrame) -> np.ndarray:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--write-residuals",
+        action="store_true",
+        help=f"compute the residual matrix, cache it at {RESIDUAL_CACHE.name} and stop",
+    )
+    parser.add_argument(
+        "--read-residuals",
+        action="store_true",
+        help="fit and save from the cached residual matrix instead of reading .acts/",
+    )
+    arguments = parser.parse_args()
+
     projection = pd.read_csv(PROJECTION_CSV)
     pls, pls_metadata = load_pls_model(PLS_PATH)
 
-    activations = aggregated_activation_matrix(projection)
-    scores = projection[["PLS1", "PLS2", "PLS3"]].to_numpy(float)
-    residuals = activations - np.asarray(pls.inverse_transform(scores), dtype=np.float64)
+    if arguments.read_residuals:
+        residuals = np.load(RESIDUAL_CACHE)
+        if len(residuals) != len(projection):
+            raise SystemExit(
+                f"{RESIDUAL_CACHE.name} has {len(residuals)} rows but the projection has "
+                f"{len(projection)}; recompute it with --write-residuals."
+            )
+    else:
+        activations = aggregated_activation_matrix(projection)
+        scores = projection[["PLS1", "PLS2", "PLS3"]].to_numpy(float)
+        residuals = activations - np.asarray(pls.inverse_transform(scores), dtype=np.float64)
+        if arguments.write_residuals:
+            np.save(RESIDUAL_CACHE, residuals)
+            print("wrote", RESIDUAL_CACHE)
+            return
 
     batches = [
         slice(start, min(start + BATCH_SIZE, len(residuals)))
