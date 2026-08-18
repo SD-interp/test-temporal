@@ -1,3 +1,4 @@
 .acts/
 .venv/
 *.csv
+scratch/

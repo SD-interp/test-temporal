@@ -77,3 +77,35 @@ def horizon_class_label(
     classes = horizon_class(months, tolerance=tolerance)
     labels = np.array(HORIZON_CLASS_LABELS + ("< 1 second",), dtype=object)
     return labels[np.where(classes < 0, HORIZON_CLASS_COUNT, classes)]
+
+
+# The day-week, week-month and month-year classes are not separable in the
+# surface coordinate `t`: for the abst family their adjacent-class overlap in t
+# runs 0.47 to 0.67, and the median gap between neighbouring class centres is
+# about 0.007 against a within-class spread of 0.064. Merging them into a single
+# "day - year" bucket declines a distinction the activations do not support,
+# rather than reporting it as an error. The remaining boundaries are unchanged.
+MERGED_HORIZON_CLASS_MAP = np.array([0, 1, 2, 3, 3, 3, 4, 5, 6], dtype=np.int64)
+MERGED_HORIZON_CLASS_LABELS = (
+    "second - minute",
+    "minute - hour",
+    "hour - day",
+    "day - year",
+    "year - decade",
+    "decade - century",
+    "century - +inf",
+)
+MERGED_HORIZON_CLASS_COUNT = len(MERGED_HORIZON_CLASS_LABELS)
+
+
+def merge_horizon_classes(classes: np.ndarray | pd.Series | list[int]) -> np.ndarray:
+    """Map 9-class horizon indices onto the coarser 7-class scheme.
+
+    Out-of-range values (``-1``) are passed through unchanged, so the result can
+    be filtered the same way as the input.
+    """
+
+    values = np.asarray(classes, dtype=np.int64)
+    if values.size and (values.max() >= HORIZON_CLASS_COUNT):
+        raise ValueError("Class indices must be below %d." % HORIZON_CLASS_COUNT)
+    return np.where(values < 0, values, MERGED_HORIZON_CLASS_MAP[np.clip(values, 0, None)])

@@ -144,6 +144,28 @@ class BinaryDecompositionOrdinalRegressor(BaseEstimator, ClassifierMixin):
             self.estimators_.append(model)
         return self
 
+    def decision_function(self, X: np.ndarray) -> np.ndarray:
+        """Cumulative log-odds of ``y > k``, one column per threshold.
+
+        This family has no per-class logits: it is ``K - 1`` independent binary
+        models, so column ``k`` is the raw score of the "is the class greater
+        than k?" model. Columns are not forced to decrease, unlike the
+        probabilities in :meth:`predict_proba`, so they show the disagreement
+        between thresholds that the monotone projection later removes.
+
+        A degenerate threshold that saw only one label during fitting has no
+        score and is reported as ``+/- inf``.
+        """
+
+        X = np.asarray(X, dtype=np.float64)
+        columns = []
+        for estimator in self.estimators_:
+            if isinstance(estimator, float):
+                columns.append(np.full(len(X), np.inf if estimator >= 0.5 else -np.inf))
+            else:
+                columns.append(estimator.decision_function(X))
+        return np.column_stack(columns)
+
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
         greater = np.column_stack(
