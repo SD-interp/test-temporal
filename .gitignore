@@ -1,5 +1,6 @@
-.acts/
+.acts*
 .venv/
 *.csv
 scratch/
 cross layer-pos
+models/
