@@ -1,0 +1,80 @@
+{
+  "layer_components": [
+    "layer_out/18",
+    "layer_out/27"
+  ],
+  "positions": [
+    -1
+  ],
+  "pls_components": 6,
+  "residual_pca_components": 3,
+  "shared_model": true,
+  "fit_datasets": [
+    "conversational_no_output_format",
+    "plain_english",
+    "plain_long"
+  ],
+  "bucket": "temporal-research-bucket",
+  "folders": [
+    "expanded_NOF_selected_acts",
+    "expanded_plain_english_selected_acts",
+    "expanded_plain_long_selected_acts"
+  ],
+  "batch_sample_size": null,
+  "max_rows_per_batch": null,
+  "fit_sample_size": 50000,
+  "random_seed": 0,
+  "datasets": [
+    {
+      "dataset": "conversational_no_output_format",
+      "rows": 37224,
+      "in_fit_set": true,
+      "fit_rows": 16666,
+      "held_out_rows": 20558,
+      "r2_all_rows": 0.9371991372251973,
+      "r2_held_out": 0.9372946574598163,
+      "pls_1_target_r": 0.9281783884177542,
+      "residual_energy_fraction": 0.41660985262608247,
+      "residual_pca_explained_variance_ratio": [
+        0.19130275095131885,
+        0.07505284519284769,
+        0.06708326286233875
+      ],
+      "csv": "/content/results/layer18_pls/conversational_no_output_format_layer18_27_pos-1_pls6.csv"
+    },
+    {
+      "dataset": "plain_english",
+      "rows": 49632,
+      "in_fit_set": true,
+      "fit_rows": 16666,
+      "held_out_rows": 32966,
+      "r2_all_rows": 0.9154742877665777,
+      "r2_held_out": 0.9159437801954924,
+      "pls_1_target_r": 0.85726239465683,
+      "residual_energy_fraction": 0.41660985262608247,
+      "residual_pca_explained_variance_ratio": [
+        0.19130275095131885,
+        0.07505284519284769,
+        0.06708326286233875
+      ],
+      "csv": "/content/results/layer18_pls/plain_english_layer18_27_pos-1_pls6.csv"
+    },
+    {
+      "dataset": "plain_long",
+      "rows": 49632,
+      "in_fit_set": true,
+      "fit_rows": 16666,
+      "held_out_rows": 32966,
+      "r2_all_rows": 0.8775532181544216,
+      "r2_held_out": 0.8772687516930133,
+      "pls_1_target_r": 0.7502231284538922,
+      "residual_energy_fraction": 0.41660985262608247,
+      "residual_pca_explained_variance_ratio": [
+        0.19130275095131885,
+        0.07505284519284769,
+        0.06708326286233875
+      ],
+      "csv": "/content/results/layer18_pls/plain_long_layer18_27_pos-1_pls6.csv"
+    }
+  ]
+}
